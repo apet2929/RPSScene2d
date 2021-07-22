@@ -3,10 +3,7 @@ package com.moonjew.rps;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -14,36 +11,41 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 
 public class RockPaperScissors extends ApplicationAdapter {
-	SpriteBatch batch;
-	Texture img;
 	BitmapFont font;
 	Skin skin;
-	Stage stage;
-
-	
+	Stage playStage;
+	Stage menuStage;
+	boolean play;
 	@Override
 	public void create () {
-		batch = new SpriteBatch();
-		img = new Texture("badlogic.jpg");
 		skin = new Skin(Gdx.files.internal("metalui/metal-ui.json"));
 		font = new BitmapFont(Gdx.files.internal("font.fnt"));
-		stage = new Stage(new ScreenViewport());
-		Gdx.input.setInputProcessor(stage);
+		play = false;
+		menuStage = new Stage(new StretchViewport(640, 400));
+		playStage = new Stage(new StretchViewport(640, 400));
+
+		Gdx.input.setInputProcessor(menuStage);
 		Table root = new Table();
 		root.setFillParent(true);
-		stage.addActor(root);
+		playStage.addActor(root);
+
+
 
 //		Begin layout
 		final Label resultLabel = new Label("", skin);
+
+
 		resultLabel.getStyle().font = font;
 		resultLabel.setStyle(resultLabel.getStyle());
 
 		final Label cpuLabel = new Label("", skin);
 		cpuLabel.setStyle(resultLabel.getStyle());
+
+		final Label choiceLabel = new Label("", skin);
+		choiceLabel.setStyle(resultLabel.getStyle());
 
 		root.defaults().space(0);
 
@@ -64,6 +66,7 @@ public class RockPaperScissors extends ApplicationAdapter {
 		test.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
+				choiceLabel.setText("Rock vs ");
 				checkWon(actor, resultLabel, cpuLabel);
 			}
 		});
@@ -75,6 +78,7 @@ public class RockPaperScissors extends ApplicationAdapter {
 		test.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
+				choiceLabel.setText("Paper vs ");
 				checkWon(actor, resultLabel, cpuLabel);
 			}
 		});
@@ -86,6 +90,7 @@ public class RockPaperScissors extends ApplicationAdapter {
 		test.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
+				choiceLabel.setText("Scissors vs ");
 				checkWon(actor, resultLabel, cpuLabel);
 			}
 		});
@@ -93,12 +98,52 @@ public class RockPaperScissors extends ApplicationAdapter {
 		root.add(buttons).expandY().top();
 
 		root.row();
-
-		root.add(cpuLabel);
+		Table table = new Table();
+		table.add(choiceLabel);
+		table.add(cpuLabel);
+		root.add(table).colspan(3);
 
 		root.row();
 
-		root.add(resultLabel);
+		root.add(resultLabel).expandX();
+
+		root = new Table();
+		root.setFillParent(true);
+		menuStage.addActor(root);
+
+		label = new Label("Play", skin);
+		label.getStyle().font = font;
+		label.setStyle(label.getStyle());
+
+		root.add(label);
+
+		root.row();
+
+		buttons = new Table();
+		test = new TextButton("Play", skin);
+		test.getStyle().font = font;
+		test.addListener(new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				play = true;
+				Gdx.input.setInputProcessor(playStage);
+			}
+		});
+		buttons.add(test).uniform();
+
+		test = new TextButton("Quit", skin);
+		test.getStyle().font = font;
+		test.addListener(new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				Gdx.app.exit();
+			}
+		});
+		buttons.add(test).uniform();
+
+		root.add(buttons).growX();
+
+
 	}
 
 	public void checkWon(Actor actor, Label resultLabel, Label cpuLabel){
@@ -146,23 +191,34 @@ public class RockPaperScissors extends ApplicationAdapter {
 	}
 
 	@Override
+	public void resize(int width, int height) {
+		super.resize(width, height);
+		playStage.getViewport().update(width, height, true);
+		menuStage.getViewport().update(width, height, true);
+	}
+
+	@Override
 	public void render () {
 		Gdx.gl.glClearColor(1,1,1, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		playStage.getViewport().apply();
+		menuStage.getViewport().apply();
 
-//		batch.begin();
-//		batch.draw(img, 0, 0);
-//		batch.end();
-
-		stage.act();
-		stage.draw();
+		if(play) {
+			playStage.act();
+			playStage.draw();
+		}
+		else {
+			menuStage.act();
+			menuStage.draw();
+		}
 
 	}
 
-	
 	@Override
 	public void dispose () {
-		batch.dispose();
-		img.dispose();
+		playStage.dispose();
+		font.dispose();
+		skin.dispose();
 	}
 }
